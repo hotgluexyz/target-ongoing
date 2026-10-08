@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 
@@ -15,6 +16,13 @@ def _reference_name(reference: Any) -> str | None:  # noqa: ANN401
     if isinstance(reference, dict):
         return _first(reference.get("name"), reference.get("Name"))
     return reference
+
+
+def _as_list(value: Any) -> list[Any]:  # noqa: ANN401
+    """Decode arrays serialized by the Parquet-to-ETL handoff."""
+    if isinstance(value, str):
+        value = json.loads(value)
+    return value if isinstance(value, list) else []
 
 
 def item_to_article(record: dict[str, Any], goods_owner_id: int) -> dict[str, Any]:
@@ -86,7 +94,7 @@ def purchase_order_to_ongoing(
         message = "QuickBooks purchase order is missing DocNumber or Id."
         raise ValueError(message)
 
-    lines = record.get("lineItems") or record.get("Line") or []
+    lines = _as_list(record.get("lineItems") or record.get("Line"))
     payload_lines = []
     for index, line in enumerate(lines, start=1):
         mapped = _line_to_purchase_order_line(line, index)

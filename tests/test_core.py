@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from target_ongoing.mapper import item_to_article, purchase_order_to_ongoing
@@ -74,6 +76,37 @@ def test_purchase_order_maps_only_item_lines() -> None:
             }
         ],
     }
+
+
+def test_purchase_order_decodes_serialized_lines() -> None:
+    """The ETL handoff serializes QuickBooks nested Line arrays as JSON."""
+    purchase_order = purchase_order_to_ongoing(
+        {
+            "DocNumber": "PO-102",
+            "Line": json.dumps(
+                [
+                    {
+                        "ItemBasedExpenseLineDetail": {
+                            "ItemRef": {"name": "Widget Blue"},
+                            "Qty": 3,
+                        }
+                    }
+                ]
+            ),
+        },
+        42,
+        2,
+    )
+
+    assert purchase_order["purchaseOrderLines"] == [
+        {
+            "rowNumber": "1",
+            "articleNumber": "Widget Blue",
+            "numberOfItems": 3,
+            "rowPrice": None,
+            "comment": None,
+        }
+    ]
 
 
 def test_purchase_order_rejects_lines_without_products() -> None:
