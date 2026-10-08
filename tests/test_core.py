@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from target_ongoing.mapper import item_to_article, purchase_order_to_ongoing
@@ -83,16 +81,14 @@ def test_purchase_order_decodes_serialized_lines() -> None:
     purchase_order = purchase_order_to_ongoing(
         {
             "DocNumber": "PO-102",
-            "Line": json.dumps(
-                [
-                    {
-                        "ItemBasedExpenseLineDetail": {
-                            "ItemRef": {"name": "Widget Blue"},
-                            "Qty": 3,
-                        }
+            "Line": [
+                {
+                    "ItemBasedExpenseLineDetail": {
+                        "ItemRef": {"name": "Widget Blue"},
+                        "Qty": 3,
                     }
-                ]
-            ),
+                }
+            ],
         },
         42,
         2,
